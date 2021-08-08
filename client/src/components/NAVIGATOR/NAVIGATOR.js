@@ -2,9 +2,11 @@ import SettingsInputComponentIcon from '@material-ui/icons/SettingsInputComponen
 import PermMediaOutlinedIcon from '@material-ui/icons/PhotoSizeSelectActual'
 import SettingsEthernetIcon from '@material-ui/icons/SettingsEthernet'
 import PhonelinkSetupIcon from '@material-ui/icons/PhonelinkSetup'
+import ModalComponent from '../LoginModal/modal.componenet'
 import DnsRoundedIcon from '@material-ui/icons/DnsRounded'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
+import IconButton from '@material-ui/core/IconButton'
 import SettingsIcon from '@material-ui/icons/Settings'
 import { makeStyles } from '@material-ui/core/styles'
 import { withStyles } from '@material-ui/core/styles'
@@ -21,6 +23,7 @@ import PropTypes from 'prop-types'
 import { useState } from 'react'
 import React from 'react'
 import clsx from 'clsx'
+
 import {
   GoogleMap,
   useLoadScript,
@@ -239,6 +242,15 @@ function NAVIGATOR(props) {
                 >
                   {childId}
                 </ListItemText>
+                <IconButton
+                  style={{ padding: '20px', marginTop: '38vh' }}
+                  color="inherit">
+                  <ModalComponent
+                    me={meState.me}
+                    isLoggedIn={meState.isLoggedIn}
+                    handleLogOut={handleLogOut}
+                  />
+                </IconButton>
               </ListItem>
             ))}
 
