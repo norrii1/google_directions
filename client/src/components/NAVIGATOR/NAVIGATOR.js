@@ -20,9 +20,12 @@ import Drawer from '@material-ui/core/Drawer'
 import { formatRelative } from "date-fns"
 import List from '@material-ui/core/List'
 import PropTypes from 'prop-types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import React from 'react'
 import clsx from 'clsx'
+import User from '../../utils/UserAPI'
+
+
 
 import {
   GoogleMap,
@@ -168,6 +171,49 @@ function NAVIGATOR(props) {
     }
   }, [])
 
+  const [meState, setMeState] = useState({
+  me: { },
+  isLoggedIn: true
+})
+
+const getMe = () => {
+  User.me()
+    .then(({ data: me }) => {
+      if (me) {
+        setMeState({ me, isLoggedIn: true })
+      } else {
+        getMe()
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      setMeState({ ...meState, isLoggedIn: false })
+    })
+}
+
+const handleLogOut = () => {
+  localStorage.removeItem('token')
+  setMeState({ me: {}, isLoggedIn: false })
+  window.location = '/'
+}
+
+useEffect(() => {
+  getMe()
+}, [])
+
+const updateMe = () => {
+  User.me()
+    .then(({ data: me }) => {
+      console.log(me)
+      setMeState({ me, isLoggedIn: true })
+    })
+    .catch(err => {
+      console.error(err)
+      setMeState({ ...meState, isLoggedIn: false })
+    })
+}
+
+
 
   if (loadError) return "Error"
   if (!isLoaded) return "Loading..."
@@ -242,15 +288,6 @@ function NAVIGATOR(props) {
                 >
                   {childId}
                 </ListItemText>
-                <IconButton
-                  style={{ padding: '20px', marginTop: '38vh' }}
-                  color="inherit">
-                  <ModalComponent
-                    me={meState.me}
-                    isLoggedIn={meState.isLoggedIn}
-                    handleLogOut={handleLogOut}
-                  />
-                </IconButton>
               </ListItem>
             ))}
 
@@ -258,6 +295,15 @@ function NAVIGATOR(props) {
           </React.Fragment>
         ))}
       </List>
+        <IconButton
+          style={{ padding: '20px', marginTop: '38vh' }}
+          color="inherit">
+          <ModalComponent
+            me={meState.me}
+            isLoggedIn={meState.isLoggedIn}
+            handleLogOut={handleLogOut}
+          />
+        </IconButton>
     </Drawer>
     <div>
         <GoogleMap
@@ -267,7 +313,7 @@ function NAVIGATOR(props) {
           center={center}
           onLoad={onMapLoad}
           onClick={onMapClick}
-        />
+        >
         {markers.map((marker) => (
           <Marker
             key={`${marker.lat}-${marker.lng}`}
@@ -295,6 +341,7 @@ function NAVIGATOR(props) {
             </div>
           </InfoWindow>
         ) : null}
+        </ GoogleMap>
     </div>
     </div>
   )
