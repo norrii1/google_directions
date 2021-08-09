@@ -29,16 +29,13 @@ router.get('/listings/:id', passport.authenticate('jwt'), (req, res) => Listing.
 // POST one listing
 router.post('/listings', passport.authenticate('jwt'), (req, res) => Listing.create({
   title: req.body.title,
-  rent: req.body.rent,
-  sell: req.body.sell,
-  body: req.body.body,
-  price: req.body.price,
+  recieve: req.body.recieve,
+  send: req.body.send,
+  initialAddress: req.body.initialAddress,
+  destination: req.body.destination,
   seller: req.user._id,
   datePosted: req.body.datePosted,
-  category: req.body.category,
-  imageURL: req.body.imageURL,
-  lat: req.body.lat,
-  lng: req.body.lng
+  category: req.body.category
 })
   .then(listing => {
     User.findByIdAndUpdate(req.user._id, { $push: { listings: listing._id } })

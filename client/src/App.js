@@ -1,7 +1,10 @@
+import PostDelivery from './pages/PostDelivery'
 import { useState, useEffect } from 'react'
+import Listing from './pages/Listing'
 import Home from './pages/Home'
 import User from './utils/UserAPI'
 import Login from './pages/Login'
+
 
 import './App.css'
 import {
@@ -80,8 +83,14 @@ function App() {
           <Route exact path='/Home'>
             <Home />
           </Route>
+          <Route exact path='/PostDelivery'>
+            <PostDelivery />
+          </Route>
           <Route exact path='/'>
             <Login updateMe={updateMe} />
+          </Route>
+          <Route exact path='/listing/:id'>
+            <Listing />
           </Route>
             </Switch>
         </div>

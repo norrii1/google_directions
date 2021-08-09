@@ -18,15 +18,14 @@ import ListItem from '@material-ui/core/ListItem'
 import Divider from '@material-ui/core/Divider'
 import Drawer from '@material-ui/core/Drawer'
 import { formatRelative } from "date-fns"
-import List from '@material-ui/core/List'
-import PropTypes from 'prop-types'
 import { useState, useEffect } from 'react'
+import List from '@material-ui/core/List'
+import { Link }  from '@material-ui/core'
+import User from '../../utils/UserAPI'
+import PropTypes from 'prop-types'
+import ListItems from '../ListItems'
 import React from 'react'
 import clsx from 'clsx'
-import User from '../../utils/UserAPI'
-
-
-
 import {
   GoogleMap,
   useLoadScript,
@@ -38,7 +37,7 @@ const categories = [
   {
     id: 'Develop',
     children: [
-      { id: 'Authentication', icon: <PeopleIcon />, active: true },
+      { id: 'PostDelivery', icon: <PeopleIcon />, active: true,},
       { id: 'Database', icon: <DnsRoundedIcon /> },
       { id: 'Storage', icon: <PermMediaOutlinedIcon /> },
       { id: 'Hosting', icon: <PublicIcon /> },
@@ -54,12 +53,8 @@ const categories = [
       { id: 'Test Lab', icon: <PhonelinkSetupIcon /> },
     ],
   },
-];
+]
 
-
-
-
-const libraries = ["places"]
 const useStyles = makeStyles((theme) => ({
   root: {
     '& > *': {
@@ -120,57 +115,7 @@ const useStyles = makeStyles((theme) => ({
 
 
 function NAVIGATOR(props) {
-  const [selected, setSelected] = React.useState(null);
-  const [markers, setMarkers] = React.useState([]);
-
-  const onMapClick = React.useCallback((e) => {
-    setMarkers((current) => [
-      ...current,
-      {
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng(),
-        time: new Date(),
-      },
-    ]);
-  }, []);
-  
-  let lat = 0, lng = 0
-
-  const mapContainerStyle = {
-    height: "69vh",
-    width: "100%",
-  }
-  const center = { lat: 37.8719, lmg: 22.2585 }
-  const mapRef = React.useRef();
-  const onMapLoad = React.useCallback((map) => {
-    mapRef.current = map
-    if (mapRef.current.zoom < 14) {
-      setProgress(0)
-    }
-  }, [])
-
-  const [progress, setProgress] = React.useState()
   const classes = useStyles()
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: 'AIzaSyCzfVue49sMcwHHa1FXAYDiSrpE1CTJ6IE',
-    libraries,
-  })
-
-  const panTo = React.useCallback(({ lat, lng }) => {
-    mapRef.current.panTo({ lat, lng });
-    mapRef.current.setZoom(14)
-    console.log(mapRef.current)
-    if (mapRef.current.zoom === 14) {
-
-      const timer = setInterval(() => {
-        setProgress(100)
-      }, 500)
-      return () => {
-        clearInterval(timer);
-      };
-    }
-  }, [])
-
   const [meState, setMeState] = useState({
   me: { },
   isLoggedIn: true
@@ -213,137 +158,13 @@ const updateMe = () => {
     })
 }
 
-
-
-  if (loadError) return "Error"
-  if (!isLoaded) return "Loading..."
-
   return (
-    <div
-      id='Compass'
-      className="locate"
-      onClick={() => {
-        const timer = setInterval(() => {
-          setProgress((oldProgress) => {
-            const diff = Math.random() * 15;
-            return Math.min(oldProgress + diff, 100);
-          });
-        }, 700)
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            panTo({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            });
-            lat = position.coords.latitude
-            lng = position.coords.longitude
-            console.log(position.coords.latitude)
-            console.log(position.coords.longitude)
-          },
-          () => null
-        );
-
-      }
-      }
-    >
     <Drawer variant="permanent" >
-      <List disablePadding>
-        <ListItem className={clsx(classes.firebase, classes.item, classes.itemCategory)}>
-          Beta
-        </ListItem>
-        <ListItem className={clsx(classes.item, classes.itemCategory)}>
-          <ListItemIcon className={classes.itemIcon}>
-            <HomeIcon />
-          </ListItemIcon>
-          <ListItemText
-            classes={{
-              primary: classes.itemPrimary,
-            }}
-          >
-            Project Overview
-          </ListItemText>
-        </ListItem>
-        {categories.map(({ id, children }) => (
-          <React.Fragment key={id}>
-            <ListItem className={classes.categoryHeader}>
-              <ListItemText
-                classes={{
-                  primary: classes.categoryHeaderPrimary,
-                }}
-              >
-                {id}
-              </ListItemText>
-            </ListItem>
-            {children.map(({ id: childId, icon, active }) => (
-              <ListItem
-                key={childId}
-                button
-                className={clsx(classes.item, active && classes.itemActiveItem)}
-              >
-                <ListItemIcon className={classes.itemIcon}>{icon}</ListItemIcon>
-                <ListItemText
-                  classes={{
-                    primary: classes.itemPrimary,
-                  }}
-                >
-                  {childId}
-                </ListItemText>
-              </ListItem>
-            ))}
-
-            <Divider className={classes.divider} />
-          </React.Fragment>
-        ))}
-      </List>
-        <IconButton
-          style={{ padding: '20px', marginTop: '38vh' }}
-          color="inherit">
-          <ModalComponent
-            me={meState.me}
-            isLoggedIn={meState.isLoggedIn}
-            handleLogOut={handleLogOut}
-          />
-        </IconButton>
+      <ListItem className={clsx(classes.itemCategory)} style={{ textDecoration: 'none', color: 'white' }}>
+        Beta
+      </ListItem>
+      <ListItems style={{marginRight: '10%'}}/>
     </Drawer>
-    <div>
-        <GoogleMap
-          id="map"
-          mapContainerStyle={mapContainerStyle}
-          zoom={8}
-          center={center}
-          onLoad={onMapLoad}
-          onClick={onMapClick}
-        >
-        {markers.map((marker) => (
-          <Marker
-            key={`${marker.lat}-${marker.lng}`}
-            position={{ lat: marker.lat, lng: marker.lng }}
-            onClick={() => {
-              setSelected(marker);
-            }}
-          />
-        ))}
-        {selected ? (
-          <InfoWindow
-            position={{ lat: selected.lat, lng: selected.lng }}
-            onCloseClick={() => {
-              setSelected(null);
-            }}
-          >
-            <div>
-              <h2>
-                <span role="img" aria-label="bear">
-                  🐻
-                </span>{" "}
-                Alert
-              </h2>
-              <p>Spotted {formatRelative(selected.time, new Date())}</p>
-            </div>
-          </InfoWindow>
-        ) : null}
-        </ GoogleMap>
-    </div>
-    </div>
   )
     }
 

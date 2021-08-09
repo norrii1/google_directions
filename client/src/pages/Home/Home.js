@@ -1,10 +1,18 @@
 import NAVIGATOR from '../../components/NAVIGATOR'
+import React from 'react'
+import Map from '../../components/Map/Map'
+
+
 
 const Home = props => {
 
   return (
-   
-    <NAVIGATOR />
+          <div>
+        <NAVIGATOR />
+      <main>
+        <Map />
+      </main>
+    </div>
   )
 }
 
