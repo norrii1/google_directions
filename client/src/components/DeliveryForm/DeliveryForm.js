@@ -11,6 +11,17 @@ import Listing from '../../utils/ListingAPI'
 import Map from '../../components/Map'
 import { useState } from 'react'
 import React from 'react'
+import usePlacesAutocomplete, {
+  getGeocode,
+  getLatLng,
+} from "use-places-autocomplete"
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxPopover,
+  ComboboxList,
+  ComboboxOption,
+} from "@reach/combobox"
 
 
 
@@ -68,29 +79,27 @@ const DeliveryForm = props => {
     setCategory(event.target.value);
   }
 
-  const [rentState, setRentState] = useState(false)
+  const [recieveState, setRecieveState] = useState(false)
   const handleCheckboxR = () => {
-    setRentState(!rentState)
+    setRecieveState(!recieveState)
   }
 
-  const [saleState, setSaleState] = useState(false)
+  const [sendState, setSendState] = useState(false)
   const handleCheckboxS = () => {
-    setSaleState(!saleState)
+    setSendState(!sendState)
   }
+
 
 
   const handleCreatePost = event => {
     event.preventDefault()
-    if (props.title.length > 4 && props.price.length > 0 && category && props.body.length > 2) {
       const date = new Date().setDate(new Date().getDate())
       Listing.create({
         title: props.title,
-        rent: rentState,
-        sell: saleState,
-        body: props.body,
-        price: props.price,
-        lat: lat,
-        lng: lng,
+        recieve: recieveState,
+        send: sendState,
+        initialAddress: initialAddressState,
+        destination: destinationState,
         datePosted: date,
         category: category
       })
@@ -101,9 +110,100 @@ const DeliveryForm = props => {
         })
         .catch(err => console.error(err))
     }
-    else {
-      alert('All input fields are required. Please check your input and try again.')
+
+  
+    
+  const mapRef = React.useRef();
+  const onMapLoad = React.useCallback((map) => {
+    mapRef.current = map
+    if (mapRef.current.zoom < 14) {
+      setProgress(0)
     }
+  }, [])
+
+  const [progress, setProgress] = React.useState()
+
+  const panTo = React.useCallback(({ lat, lng }) => {
+    mapRef.current.panTo({ lat, lng })
+    console.log(mapRef.current)
+    if (mapRef.current.zoom === 14) {
+
+      const timer = setInterval(() => {
+        setProgress(100)
+      }, 500)
+      return () => {
+        clearInterval(timer);
+      };
+    }
+  }, [])
+
+  const [initialAddressState, setInitialAddressState] = useState('')
+  const handleIntialAddress = () => {
+    setInitialAddressState(initialAddressState)
+  }
+
+  const [destinationState, setDestinationState] = useState('')
+  const handleDestination = () => {
+    setDestinationState(destinationState)
+  }
+
+
+
+  function Search({ panTo }) {
+    const {
+      ready,
+      value,
+      suggestions: { status, data },
+      setValue,
+      clearSuggestions,
+    } = usePlacesAutocomplete({
+      requestOptions: {
+        location: { lat: () => 43.6532, lng: () => -79.3832 },
+        radius: 100 * 1000,
+      },
+    });
+  
+    // https://developers.google.com/maps/documentation/javascript/reference/places-autocomplete-service#AutocompletionRequest
+
+    const handleInput = (e) => {
+      setValue(e.target.value);
+    };
+
+    const handleSelect = async (address) => {
+      setValue(address, false);
+      clearSuggestions();
+    };
+    return (
+      <div className="search" style={{ 
+        lineHeight: '40px'
+       }}
+       >
+        <Combobox onSelect={handleSelect}>
+          <ComboboxInput
+            value={value}
+            onChange={handleInput}
+            disabled={!ready}
+            placeholder="Search your location"
+            style={{
+              lineHeight: '30px',
+              width: '69vw'
+            }}
+          />
+          <ComboboxPopover 
+          style={{
+            backgroundColor: 'white'
+          }}
+          >
+            <ComboboxList>
+              {status === "OK" &&
+                data.map(({ id, description }) => (
+                  <ComboboxOption key={id} value={description} />
+                ))}
+            </ComboboxList>
+          </ComboboxPopover>
+        </Combobox>
+      </div>
+    );
   }
 
 
@@ -112,6 +212,7 @@ const DeliveryForm = props => {
       <FormControl fullWidth variant='outlined'>
         <InputLabel htmlFor='title'>Title</InputLabel>
         <OutlinedInput
+          id= 'title'
           value={props.title}
           labelWidth={50}
           name='title'
@@ -134,11 +235,7 @@ const DeliveryForm = props => {
           <MenuItem value={null}>
             <em>Select a Category</em>
           </MenuItem>
-          <MenuItem value={process.env.REACT_APP_PET_ID}>Pets</MenuItem>
-          <MenuItem value={process.env.REACT_APP_EL_ID}>Electronics</MenuItem>
-          <MenuItem value={process.env.REACT_APP_HG_ID}>Home Goods</MenuItem>
-          <MenuItem value={process.env.REACT_APP_VEHICLES_ID}>Vehicles</MenuItem>
-          <MenuItem value={process.env.REACT_APP_CLOTHES_ID}>Clothes</MenuItem>
+          <MenuItem value={process.env.REACT_APP_Food_ID}>Food</MenuItem>
 
         </Select>
       </FormControl>
@@ -149,7 +246,7 @@ const DeliveryForm = props => {
 
         <Checkbox
           id='rent'
-          value={props.rent}
+          value={props.recieve}
           name='rent'
           onChange={handleCheckboxR}
           variant='outlined'
@@ -159,40 +256,34 @@ const DeliveryForm = props => {
         <span style={{ marginTop: "13px" }}>Send Package</span>
 
         <Checkbox
-          value={props.sell}
+          value={props.send}
           name='sell'
           onChange={handleCheckboxS}
           variant='outlined'
           color='primary'
         />
       </p>
-      <FormControl fullWidth variant='outlined'>
-        <InputLabel htmlFor='body'>Description</InputLabel>
-        <OutlinedInput
-          id='body'
-          labelWidth={50}
-          multiline
-          rows={4}
-          name='body'
-          value={props.body}
-          onChange={props.handleInputChange}
-        />
-      </FormControl>
-      <br />
-      <FormControl fullWidth variant='outlined'>
-        <InputLabel htmlFor='price'>Price</InputLabel>
-        <OutlinedInput
-          labelWidth={10}
-          name='price'
-          value={props.price}
-          onChange={props.handleInputChange}
-          required='true'
-        />
-      </FormControl>
-      <br />
       <FormControl>
-        <Map />
+      <Search 
+        panTo={panTo}
+          id= 'initialAddress'
+          value={props.initialAddress}
+          name= "initialAddress"
+          onChange= {handleIntialAddress}
+        />
       </FormControl>
+      <br />
+      <FormControl fullWidth variant='outlined'>
+        <Search 
+          panTo={panTo}
+          value={props.destination}
+          name= 'destination'
+          id= 'destination'
+          onChange={handleDestination}
+         />
+      </FormControl>
+      <br />
+
 
       <Button onClick={handleCreatePost} variant='outlined' color='primary'>
         Create Listing
