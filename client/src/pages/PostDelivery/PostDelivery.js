@@ -51,6 +51,8 @@ const PostDelivery = props => {
     price: '',
     rent: false,
     sell: false,
+    initialAddress: '',
+    destination: '',
     listings: [],
     errors: {
       title: ''

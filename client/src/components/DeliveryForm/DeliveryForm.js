@@ -76,7 +76,7 @@ const DeliveryForm = props => {
   }
 
   const handleChange = (event) => {
-    setCategory(event.target.value);
+    setCategory(event.target.value)
   }
 
   const [recieveState, setRecieveState] = useState(false)
@@ -89,7 +89,18 @@ const DeliveryForm = props => {
     setSendState(!sendState)
   }
 
+  const [initialAddressState, setInitialAddressState] = useState('')
+  const handleIntialAddress = async (address) => {
+    console.log(address)
+    setInitialAddressState(address)
+  }
 
+  const [destinationState, setDestinationState] = useState('')
+  const handleDestination = async (address) => {
+    console.log(address)
+    setDestinationState(address)
+  }
+ 
 
   const handleCreatePost = event => {
     event.preventDefault()
@@ -113,39 +124,14 @@ const DeliveryForm = props => {
 
   
     
-  const mapRef = React.useRef();
-  const onMapLoad = React.useCallback((map) => {
-    mapRef.current = map
-    if (mapRef.current.zoom < 14) {
-      setProgress(0)
-    }
-  }, [])
+  const mapRef = React.useRef()
 
-  const [progress, setProgress] = React.useState()
 
   const panTo = React.useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng })
     console.log(mapRef.current)
-    if (mapRef.current.zoom === 14) {
-
-      const timer = setInterval(() => {
-        setProgress(100)
-      }, 500)
-      return () => {
-        clearInterval(timer);
-      };
-    }
   }, [])
 
-  const [initialAddressState, setInitialAddressState] = useState('')
-  const handleIntialAddress = () => {
-    setInitialAddressState(initialAddressState)
-  }
-
-  const [destinationState, setDestinationState] = useState('')
-  const handleDestination = () => {
-    setDestinationState(destinationState)
-  }
 
 
 
@@ -169,16 +155,23 @@ const DeliveryForm = props => {
       setValue(e.target.value);
     };
 
+    const handleDestSelect = (address) => {
+      handleDestination(address)
+      handleSelect(address)
+      clearSuggestions();
+    }
+
     const handleSelect = async (address) => {
       setValue(address, false);
       clearSuggestions();
-    };
+    }
+
     return (
       <div className="search" style={{ 
         lineHeight: '40px'
        }}
        >
-        <Combobox onSelect={handleSelect}>
+        <Combobox onSelect={handleDestSelect}>
           <ComboboxInput
             value={value}
             onChange={handleInput}
@@ -193,6 +186,70 @@ const DeliveryForm = props => {
           style={{
             backgroundColor: 'white'
           }}
+          >
+            <ComboboxList>
+              {status === "OK" &&
+                data.map(({ id, description }) => (
+                  <ComboboxOption key={id} value={description} />
+                ))}
+            </ComboboxList>
+          </ComboboxPopover>
+        </Combobox>
+      </div>
+    );
+  }
+
+  function Search2({ panTo }) {
+    const {
+      ready,
+      value,
+      suggestions: { status, data },
+      setValue,
+      clearSuggestions,
+    } = usePlacesAutocomplete({
+      requestOptions: {
+        location: { lat: () => 43.6532, lng: () => -79.3832 },
+        radius: 100 * 1000,
+      },
+    });
+
+    // https://developers.google.com/maps/documentation/javascript/reference/places-autocomplete-service#AutocompletionRequest
+
+    const handleInput2 = (e) => {
+      setValue(e.target.value);
+    };
+
+    const handleSelect2 = async (address) => {
+      setValue(address, false);
+      clearSuggestions();
+    }
+
+  const handleInitSelect = (address) => {
+    handleIntialAddress(address)
+    handleSelect2(address)
+  }
+
+
+    return (
+      <div className="search" style={{
+        lineHeight: '40px'
+      }}
+      >
+        <Combobox onSelect={handleInitSelect}>
+          <ComboboxInput
+            value={value}
+            onChange={handleInput2}
+            disabled={!ready}
+            placeholder="Search your location"
+            style={{
+              lineHeight: '30px',
+              width: '69vw'
+            }}
+          />
+          <ComboboxPopover
+            style={{
+              backgroundColor: 'white'
+            }}
           >
             <ComboboxList>
               {status === "OK" &&
@@ -264,25 +321,13 @@ const DeliveryForm = props => {
         />
       </p>
       <FormControl>
-      <Search 
-        panTo={panTo}
-          id= 'initialAddress'
-          value={props.initialAddress}
-          name= "initialAddress"
-          onChange= {handleIntialAddress}
-        />
+      <Search panTo={panTo}/>
       </FormControl>
       <br />
-      <FormControl fullWidth variant='outlined'>
-        <Search 
-          panTo={panTo}
-          value={props.destination}
-          name= 'destination'
-          id= 'destination'
-          onChange={handleDestination}
-         />
+      <FormControl>
+        <Search2 panTo={panTo} />
       </FormControl>
-      <br />
+   
 
 
       <Button onClick={handleCreatePost} variant='outlined' color='primary'>
